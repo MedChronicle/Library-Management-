@@ -1,0 +1,9 @@
+MemberID,Name,Email,MembershipType
+1,Arpit Saharan,arpit@vitstudent.ac.in,Student
+2,Sarthak Kamra,sarthak@vitstudent.ac.in,Student
+3,Priya Sharma,priya@vitstudent.ac.in,Faculty
+4,Rohan Verma,rohan@vitstudent.ac.in,Guest
+5,Meera Iyer,meera@example.com,Student
+6,Kabir Singh,kabir@example.com,Faculty
+7,Ananya Rao,ananya@example.com,Student
+8,Dev Patel,dev@example.com,Guest
