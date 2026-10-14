@@ -1,0 +1,19 @@
+ResourceID,Type,Title,Price,DateAdded,Author,ISBN,Genre,Language,Format,PubYear,Copies,AvailCopies,TimesBorrowed,ISSN,Publisher,Volume,IssueNumber,Frequency,ImpactFactor,IndexDB,Director,Runtime,AgeRating
+101,Book,The Pragmatic Programmer,850,2026-10-14,Andrew Hunt,978-0135957059,Technology,English,Paperback,2019,5,5,0,,,,,,,,,,
+102,Book,Introduction to Algorithms,1200.5,2026-10-14,Thomas Cormen,978-0262046305,Computer Science,English,Paperback,2022,3,3,0,,,,,,,,,,
+103,Book,Clean Code,650,2026-10-14,Robert C. Martin,978-0132350884,Technology,English,Paperback,2008,4,4,0,,,,,,,,,,
+104,Book,Design Patterns,720.75,2026-10-14,Erich Gamma,978-0201633610,Computer Science,English,Paperback,1994,2,2,0,,,,,,,,,,
+105,Book,Atomic Habits,499,2026-10-14,James Clear,978-0735211292,Self Help,English,Paperback,2018,6,6,0,,,,,,,,,,
+106,Book,The Silent Patient,399,2026-10-14,Alex Michaelides,978-1250301697,Thriller,English,Paperback,2019,4,4,0,,,,,,,,,,
+107,Book,Sapiens,599,2026-10-14,Yuval Noah Harari,978-0062316097,History,English,Paperback,2011,3,3,0,,,,,,,,,,
+108,Book,Deep Learning,1450,2026-10-14,Ian Goodfellow,978-0262035613,Artificial Intelligence,English,Paperback,2016,2,2,0,,,,,,,,,,
+109,Book,The Alchemist,299,2026-10-14,Paulo Coelho,978-0061122415,Fiction,English,Paperback,1988,5,5,0,,,,,,,,,,
+110,Book,Computer Networks,799,2026-10-14,Andrew S. Tanenbaum,978-0132126953,Networking,English,Paperback,2010,3,3,0,,,,,,,,,,
+201,Journal,Nature,300,2026-10-14,,,,,,,6,6,0,0028-0836,Springer Nature,45,12,Weekly,49.9,Scopus,,,
+202,Journal,IEEE Transactions on AI,450.75,2026-10-14,,,,,,,4,4,0,2691-4581,IEEE,5,3,Quarterly,8.2,IEEE Xplore,,,
+203,Journal,Journal of Data Science,275.25,2026-10-14,,,,,,,5,5,0,1234-5678,Elsevier,12,8,Monthly,3.6,Scopus,,,
+204,Journal,ACM Computing Surveys,520,2026-10-14,,,,,,,2,2,0,0360-0300,ACM,56,4,Quarterly,16.6,ACM Digital Library,,,
+301,DVD,The Social Network,199.99,2026-10-14,,,,,,,3,3,0,,,,,,,,David Fincher,120,PG-13
+302,DVD,Inception,249.5,2026-10-14,,,,,,,2,2,0,,,,,,,,Christopher Nolan,148,PG-13
+303,DVD,Interstellar,279,2026-10-14,,,,,,,4,4,0,,,,,,,,Christopher Nolan,169,PG-13
+304,DVD,Hidden Figures,199,2026-10-14,,,,,,,3,3,0,,,,,,,,Theodore Melfi,127,PG
