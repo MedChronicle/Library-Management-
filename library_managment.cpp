@@ -301,7 +301,7 @@ Book::Book(int id, const string& t, double p, const string& a, const string& i, 
            int year, int copies, const string& lang, const string& fmt)
     : Resource(id, t, p), author(a), isbn(i), genre(g), language(lang), format(fmt),
       publicationYear(year), timesBorrowed(0) {
-    if (year < 1450 || year > 2026) {
+    if (year < 1450 || year > 2100) {
         throw InvalidYearException("Publication year " + to_string(year) + " is out of valid range for resource \"" + t + "\"");
     }
     if (a.empty()) {
@@ -845,6 +845,11 @@ public:
     void applyDiscountToAll(double percent);
     void applyDiscountByType(const string& type, double percent);
     int getResourceCount() const;
+    void exportMembersCSV(const string& filename) const;
+    void importMembersCSV(const string& filename);
+    void exportTransactionsCSV(const string& filename) const;
+    void displayLowStock(int threshold) const;
+    void exportAnalyticsCSV(const string& filename) const;
 };
 
 Library::Library(const string& name) : libraryName(name) {}
@@ -859,6 +864,7 @@ Library::~Library() {
 void Library::addResource(Book* book) {
     for (Resource* r : resources) {
         if (r->getResourceID() == book->getResourceID()) {
+            delete book;
             throw DuplicateResourceException("A resource with ID " + to_string(book->getResourceID()) + " already exists");
         }
     }
@@ -868,6 +874,7 @@ void Library::addResource(Book* book) {
 void Library::addResource(Journal* journal) {
     for (Resource* r : resources) {
         if (r->getResourceID() == journal->getResourceID()) {
+            delete journal;
             throw DuplicateResourceException("A resource with ID " + to_string(journal->getResourceID()) + " already exists");
         }
     }
@@ -877,6 +884,7 @@ void Library::addResource(Journal* journal) {
 void Library::addResource(DVD* dvd) {
     for (Resource* r : resources) {
         if (r->getResourceID() == dvd->getResourceID()) {
+            delete dvd;
             throw DuplicateResourceException("A resource with ID " + to_string(dvd->getResourceID()) + " already exists");
         }
     }
@@ -1115,6 +1123,7 @@ void Library::returnResourceFromMember(int transactionID, int daysLate) {
     }
     Resource* r = findResourceByID(it->getResourceID());
     Member* m = findMemberByID(it->getMemberID());
+    if (daysLate < 0) throw InvalidQuantityException("Days late cannot be negative");
     double fine = r->calculateLateFee(daysLate);
     it->markReturned(fine);
     r->returnCopies(1);
@@ -1474,6 +1483,95 @@ void Library::applyDiscountByType(const string& type, double percent) {
 
 int Library::getResourceCount() const { return static_cast<int>(resources.size()); }
 
+
+
+void Library::importMembersCSV(const string& filename) {
+    ifstream in(filename);
+    if (!in) throw runtime_error("Could not open " + filename);
+    string line;
+    getline(in, line);
+    int loaded = 0, skipped = 0;
+    while (getline(in, line)) {
+        if (line.empty()) continue;
+        stringstream ss(line);
+        vector<string> f;
+        string value;
+        while (getline(ss, value, ',')) {
+            if (!value.empty() && value.back() == '\r') value.pop_back();
+            if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+                value = value.substr(1, value.size() - 2);
+            f.push_back(value);
+        }
+        try {
+            if (f.size() < 4) throw InvalidFieldException("Expected MemberID,Name,Email,MembershipType");
+            addMember(stoi(f[0]), f[1], f[2], f[3]);
+            loaded++;
+        } catch (exception&) {
+            skipped++;
+        }
+    }
+    cout << loaded << " member(s) imported; " << skipped << " row(s) skipped from " << filename << "\n";
+}
+
+void Library::exportMembersCSV(const string& filename) const {
+    ofstream out(filename);
+    if (!out) throw runtime_error("Could not open " + filename);
+    out << "MemberID,Name,Email,MembershipType,MaxBorrowLimit,FinesOwed,ActiveBorrowCount\n";
+    for (const Member& m : members)
+        out << m.getMemberID() << ",\"" << m.getName() << "\",\"" << m.getEmail() << "\","
+            << m.getMembershipType() << "," << m.getMaxBorrowLimit() << ","
+            << fixed << setprecision(2) << m.getFinesOwed() << ","
+            << m.getBorrowedResourceIDs().size() << "\n";
+    cout << "Members exported to " << filename << "\n";
+}
+
+void Library::exportTransactionsCSV(const string& filename) const {
+    ofstream out(filename);
+    if (!out) throw runtime_error("Could not open " + filename);
+    out << "TransactionID,MemberID,ResourceID,IssueDate,DueDate,ReturnDate,Returned,FineAmount\n";
+    for (const Transaction& t : transactions)
+        out << t.getTransactionID() << "," << t.getMemberID() << "," << t.getResourceID() << ","
+            << t.getIssueDate() << "," << t.getDueDate() << "," << t.getReturnDate() << ","
+            << (t.getIsReturned() ? "true" : "false") << "," << fixed << setprecision(2)
+            << t.getFineAmount() << "\n";
+    cout << "Transactions exported to " << filename << "\n";
+}
+
+void Library::displayLowStock(int threshold) const {
+    if (threshold < 0) throw InvalidQuantityException("Stock threshold cannot be negative");
+    bool found = false;
+    cout << left << setw(8) << "ID" << setw(34) << "Title" << setw(14) << "Type"
+         << setw(12) << "Available" << setw(10) << "Total" << "\n";
+    printSeparatorLine(78);
+    for (Resource* r : resources) {
+        if (r->getAvailableCopies() <= threshold) {
+            cout << left << setw(8) << r->getResourceID() << setw(34) << r->getTitle()
+                 << setw(14) << r->getResourceType() << setw(12) << r->getAvailableCopies()
+                 << setw(10) << r->getTotalCopies() << "\n";
+            found = true;
+        }
+    }
+    if (!found) cout << "No resources at or below the selected stock threshold.\n";
+}
+
+void Library::exportAnalyticsCSV(const string& filename) const {
+    ofstream out(filename);
+    if (!out) throw runtime_error("Could not open " + filename);
+    out << "ResourceID,Title,Type,Price,TotalCopies,AvailableCopies,BorrowedCopies,TimesBorrowed,StockStatus\n";
+    for (Resource* r : resources) {
+        int borrowed = r->getTotalCopies() - r->getAvailableCopies();
+        string status = r->getAvailableCopies() == 0 ? "OUT_OF_STOCK" :
+                        r->getAvailableCopies() <= 2 ? "LOW_STOCK" : "AVAILABLE";
+        string title = r->getTitle();
+        replace(title.begin(), title.end(), '"', '\'');
+        out << r->getResourceID() << ",\"" << title << "\"," << r->getResourceType() << ","
+            << fixed << setprecision(2) << r->getPrice() << "," << r->getTotalCopies() << ","
+            << r->getAvailableCopies() << "," << borrowed << "," << r->getTimesBorrowed()
+            << "," << status << "\n";
+    }
+    cout << "Inventory analytics exported to " << filename << "\n";
+}
+
 int readInt(const string& prompt) {
     int value;
     while (true) {
@@ -1550,6 +1648,11 @@ void displayMenu() {
     cout << "31. Display Most Borrowed Resources" << endl;
     cout << "32. Pay Member Fine" << endl;
     cout << "33. Load Inventory from File" << endl;
+    cout << "34. Export Members to CSV" << endl;
+    cout << "35. Export Transactions to CSV" << endl;
+    cout << "36. Low-Stock Alert Report" << endl;
+    cout << "37. Export Inventory Analytics CSV" << endl;
+    cout << "38. Import Members from CSV" << endl;
     cout << " 0. Exit" << endl;
     printSeparatorLine('=', 55);
 }
@@ -1634,7 +1737,19 @@ int main() {
     printSeparatorLine('*', 55);
     cout << "SCENARIO 1: NORMAL EXECUTION - LOADING SAMPLE DATA" << endl;
     printSeparatorLine('*', 55);
-    loadSampleData(library);
+    ifstream resourceCheck("resources.csv");
+    ifstream memberCheck("members.csv");
+    if (resourceCheck.good() && memberCheck.good()) {
+        try {
+            library.loadInventoryFromFile("resources.csv");
+            library.importMembersCSV("members.csv");
+        } catch (exception& ex) {
+            cout << "CSV startup loading failed: " << ex.what() << endl;
+        }
+    } else {
+        loadSampleData(library);
+        cout << "Tip: place resources.csv and members.csv beside the executable to load CSV data." << endl;
+    }
 
     demonstrateExceptionHandling();
 
@@ -1859,6 +1974,29 @@ int main() {
                 case 33: {
                     string filename = readLine("Enter filename to load from (e.g. inventory.txt): ");
                     library.loadInventoryFromFile(filename);
+                    break;
+                }
+                case 34: {
+                    string filename = readLine("CSV filename [members.csv]: ");
+                    library.exportMembersCSV(filename.empty() ? "members.csv" : filename);
+                    break;
+                }
+                case 35: {
+                    string filename = readLine("CSV filename [transactions.csv]: ");
+                    library.exportTransactionsCSV(filename.empty() ? "transactions.csv" : filename);
+                    break;
+                }
+                case 36:
+                    library.displayLowStock(readInt("Show resources with available copies <= "));
+                    break;
+                case 37: {
+                    string filename = readLine("CSV filename [inventory_analytics.csv]: ");
+                    library.exportAnalyticsCSV(filename.empty() ? "inventory_analytics.csv" : filename);
+                    break;
+                }
+                case 38: {
+                    string filename = readLine("Members CSV filename [members.csv]: ");
+                    library.importMembersCSV(filename.empty() ? "members.csv" : filename);
                     break;
                 }
                 case 0:
